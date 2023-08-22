@@ -1,0 +1,18 @@
+[
+    " lost {color_red}{damage}{color_reset} health due to exposure to harsh weather.",
+    " took {color_red}{damage}{color_reset} damage from a fall while exploring.",
+    " suffered {color_red}{damage}{color_reset} health loss from a dangerous environment.",
+    " endured {color_red}{damage}{color_reset} damage after encountering a venomous creature.",
+    " lost {color_red}{damage}{color_reset} health due to exhaustion and dehydration.",
+    " felt the effects of {color_red}{damage}{color_reset} damage from consuming spoiled food.",
+    " took {color_red}{damage{color_reset}} damage from accidental self-injury.",
+    " suffered {color_red}{damage}{color_reset} health loss from inhaling toxic fumes.",
+    " endured {color_red}{damage}{color_reset} damage while attempting a risky maneuver.",
+    " lost {color_red}{damage}{color_reset} health due to ingesting poisonous plants.",
+    " took {color_red}{damage}{color_reset} damage from an unexpected natural hazard.",
+    " felt the pain of {color_red}{damage{color_reset}} damage after a struggle with wildlife.",
+    " suffered {color_red}{damage}{color_reset} health loss from an allergic reaction.",
+    " endured {color_red}{damage}{color_reset} damage due to a mishap with survival tools.",
+    " lost {color_red}{damage}{color_reset} health after encountering hazardous terrain."
+]
+
