@@ -139,7 +139,6 @@ def generate_player_event(player, players):
             player.inventory.remove(trade_item)
             player.inventory.append(trade_item)#need to make this a random item from items.json
 
-    
     elif event_chance == 8:  # Combat Event
         other_player = random.choice(players)
         if other_player != player and (other_player.name not in player.team):
@@ -163,6 +162,14 @@ def generate_player_event(player, players):
 
                 print(f"{player.name} attacked {other_player.name} for {damage} damage!")
                 print(f"{other_player.name} attacked back for {defender_damage} damage!")
+
+                if player.hp <= 0:
+                    print(f"{player.name} has died in combat and will be removed from the game.")
+                    players.remove(player)
+
+                if other_player.hp <= 0:
+                    print(f"{other_player.name} has died in combat and will be removed from the game.")
+                    players.remove(other_player)
 
                 player.karma -= 10
 
@@ -309,21 +316,23 @@ def generate_player_event(player, players):
             print(f"{player.name}{filler_message}")
 
     elif 90 <= event_chance <= 100:
-            damage = random.randint(10, 60)
-            
-            with open("death_messages.json", "r") as file:
-                color_red = '\033[91m'
-                color_reset = '\033[96m'
-                death_messages = json.load(file)
-                death_message = random.choice(death_messages)
-                print(f"{player.name}{death_message.format(damage=damage, color_red = color_red, color_reset = color_reset)}")
-                player.hp = max(player.hp - damage, 0)
-                if player.hp <= 0:
-                    print(f"{color_red}{player.name} has died.{color_reset}")
+        damage = random.randint(10, 60)
+        
+        with open("death_messages.json", "r") as file:
+            death_messages = json.load(file)
+            death_message = random.choice(death_messages)
+            formatted_death_message = death_message.format(damage=damage, color_red = color_red,color_reset = color_reset)
+            print(f"{player.name}{color_red}{formatted_death_message}{color_reset}")
+            player.hp = max(player.hp - damage, 0)
+            if player.hp <= 0:
+                print(f"{player.name} has died and will be removed from the game.")
+                players.remove(player)
+
 
 def decrease_hunger(player, players):
-    if player.hunger <= 80:
-
+    hunger_dmg = random.randint(5, 20)
+    if player.hunger <= 100:
+        
         for index, item in enumerate(player.inventory):
             if item.startswith("Food"):
                 existing_food = index
@@ -335,11 +344,16 @@ def decrease_hunger(player, players):
             current_amount = int(player.inventory[existing_food].split(" ")[-1])
             new_amount = max(current_amount - 1, 0)
             player.inventory[existing_food] = f"Food {new_amount}"
-            print(f"{player.name}'s hunger decreased. Current hunger: {player.hunger}")
-        else:
-            player.hunger = max(player.hunger - random.randint(15, 30), 0)
-            print(f"{player.name}'s hunger decreased. Current hunger: {player.hunger}")
 
+        else:
+            player.hunger = max(player.hunger - random.randint(3, 15), 0)
+            print(f"{player.name}'s hunger decreased. Current hunger: {player.hunger}")
+            time.sleep(1)
+
+            if player.hunger <= 0:
+                print(f"{player.name} is weakened by hunger, losing {hunger_dmg} health.")
+                player.hp = max(player.hp - hunger_dmg, 0)
+                player.hp = min(player.hp, 100) 
 
 def heal(player, players):
     first_aid = random.randint(30, 75)
@@ -348,11 +362,11 @@ def heal(player, players):
         print(f"{player.name} noticed their health is low and checks if they have any healing items.")
         if "First Aid Kit" in player.inventory:
             player.inventory.remove("First Aid Kit")
-            player.hp = min(player.hp + first_aid, 100)  # Increase health by 30, capped at 100
+            player.hp = min(player.hp + first_aid, 100)  # Increase health by 30 - 75, capped at 100
             print(f"{player.name} used the First Aid Kit and gained {first_aid} health. {player.name} is currently at {player.hp} health")
         elif "Medicinal Plant" in player.inventory:
             player.inventory.remove("Medicinal Plant")
-            player.hp = min(player.hp + herb, 100)  # Increase health by 15, capped at 100
+            player.hp = min(player.hp + herb, 100)  # Increase health by 20 - 45, capped at 100
             print(f"{player.name} used the First Aid Kit and gained {herb} health. {player.name} is currently at {player.hp} health")
         else:
             print("Unfortunately, they didn't have any healing items to use.")
@@ -379,59 +393,72 @@ def main():
     if os.path.exists("saved_game.json"):
         load_save_file = input(f"{color_green}Do you want to load your save file? (yes/no):{color_reset} ")
 
-        if load_save_file == "yes":
-            players, current_day = load_game()
+        while load_save_file.lower() not in ["yes", "no"]:
+            print(f"{color_red}Invalid input. Please enter 'yes' or 'no.'{color_reset}")
+            load_save_file = input(f"{color_green}Do you want to load your save file? (yes/no):{color_reset} ")
 
-        elif load_save_file == "no":
+        if load_save_file.lower() == "yes":
+            players, current_day = load_game()
+        elif load_save_file.lower() == "no":
             delete_save_file = input(f"{color_yellow}Do you want to delete the save file? (yes/no):{color_reset} ")
 
-            if delete_save_file == "yes":
+            while delete_save_file.lower() not in ["yes", "no"]:
+                print(f"{color_red}Invalid input. Please enter 'yes' or 'no.'{color_reset}")
+                delete_save_file = input(f"{color_yellow}Do you want to delete the save file? (yes/no):{color_reset} ")
+
+            if delete_save_file.lower() == "yes":
                 os.remove("saved_game.json")
                 print("Save file deleted.")
                 print("Please restart the game.")
                 time.sleep(5)
                 exit()
-            elif delete_save_file == "no":
+            elif delete_save_file.lower() == "no":
                 print(f"{color_blue}Save file not loaded or deleted. Closing...{color_reset}")
                 time.sleep(5)
                 exit()
-            else:
-                print(f"{color_red}Invalid input. Please enter 'yes' or 'no.'{color_reset}")
     
     # Load default or new player names
     elif not os.path.exists("saved_game.json"):
-        use_default_names = input(f"{color_green}Do you want to use default names for players? (yes/no):{color_reset} ").lower()
+        while True:
+            use_default_names = input(f"{color_green}Do you want to use default names for players? (yes/no):{color_reset} ").lower()
 
-        if use_default_names == "yes":
-            default_names = load_default_names()
-            num_players = int(input(f"{color_green}Enter the number of players:{color_reset} "))
-
-            if num_players <= 0:
-                print(f"{color_red}Number of players must be greater than 0.{color_reset}")
-            else:
-                players = [Player(name) for name in default_names[:num_players]]
-        
-        elif use_default_names == "no":
-            while True:
+            if use_default_names == "yes":
+                default_names = load_default_names()
                 num_players_input = input(f"{color_green}Enter the number of players:{color_reset} ")
 
-                if not num_players_input.isdigit():
+                while not num_players_input.isdigit():
                     print(f"{color_red}Please enter a valid number.{color_reset}")
-                    continue
+                    num_players_input = input(f"{color_green}Enter the number of players:{color_reset} ")
 
                 num_players = int(num_players_input)
 
-                if num_players not in range(1, 100):
-                    print(f"{color_red}Number of players must be between 1 and 99.{color_reset}")
-                    continue
+                if num_players <= 0:
+                    print(f"{color_red}Number of players must be greater than 0.{color_reset}")
+                else:
+                    players = [Player(name) for name in default_names[:num_players]]
+                    break
+            
+            elif use_default_names == "no":
+                while True:
+                    num_players_input = input(f"{color_green}Enter the number of players:{color_reset} ")
 
-                for i in range(num_players):
-                    name = input(f"{color_green}Enter name for Player {i + 1}:{color_reset} ")
-                    players.append(Player(name))
-                break
+                    while not num_players_input.isdigit():
+                        print(f"{color_red}Please enter a valid number.{color_reset}")
+                        num_players_input = input(f"{color_green}Enter the number of players:{color_reset} ")
 
-        else:
-            print(f"{color_red}Invalid input. Please enter 'yes' or 'no.'{color_reset}")
+                    num_players = int(num_players_input)
+
+                    if num_players not in range(1, 100):
+                        print(f"{color_red}Number of players must be between 1 and 99.{color_reset}")
+                        continue
+
+                    for i in range(num_players):
+                        name = input(f"{color_green}Enter name for Player {i + 1}:{color_reset} ")
+                        players.append(Player(name))
+                    break
+            else:
+                print(f"{color_red}Invalid input. Please enter 'yes' or 'no.'{color_reset}")
+
 
 
 
@@ -440,11 +467,22 @@ def main():
         for day in range(current_day, max_days):
             print(f"\n{color_cyan}--- Story Time ---")
             print(f"\n{color_magenta}Day {current_day}:{color_reset}")
+            
+            if not players:
+                print("No players left. The game will now end.")
+                play_again = input("Do you want to reset the game and play again? (yes/no): ")
+                if play_again.lower() == "yes":
+                    os.remove("saved_game.json")
+                    print("Save file wiped. Restarting the game.")
+                    time.sleep(3)
+                    main()
+                else:
+                    print("Thank you for playing!")
+                    exit()
+            
             day_start_time = time.time()
             while time.time() - day_start_time < 300:  # Keep looping for 5 minutes
                 for player in players:
-                    if player.hp <= 0:
-                        continue
                     random_player = random.choice(players)
                     limit_karma(player)
                     heal(player, players)
@@ -455,7 +493,7 @@ def main():
             current_day += 1
 
             if day == max_days - 1:
-                play_again = input("Maximum days reached. Do you want to play again? (yes/no): ")
+                play_again = input("Game has ended. Do you want to play again? (yes/no): ")
                 if play_again.lower() != "yes":
                     os.remove("saved_game.json")
                     print("Save file wiped.")
